@@ -1,0 +1,33 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SF-Pro-Display-Regular.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: "SF Pro Display";
+  src: url("/fonts/SF-Pro-Display-Bold.woff2") format("woff2");
+  font-weight: bold;
+  font-style: normal;
+}
+
+* {
+  font-family: "SF Pro Display", sans-serif;
+}
+
+.container {
+  max-width: 695px;
+}
+
+.nakli-black {
+  color: #18191f;
+}
+
+.bg-custom-opacity {
+  background-color: rgba(238, 239, 243, 0.2); /* Equivalent to #EEEFF433 */
+}
