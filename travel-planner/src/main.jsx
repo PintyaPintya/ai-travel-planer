@@ -7,11 +7,11 @@ import Itinerary from './Itinerary/Itinerary.jsx';
 
 const router = createBrowserRouter([
   {
-    path: "iti",
+    path: "/",
     element: <App />
   },
   {
-    path: "/",
+    path: "iti",
     element: <Itinerary />
   }
 ])

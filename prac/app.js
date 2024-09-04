@@ -1,8 +1,11 @@
 const express = require('express');
+const cors = require('cors');
 const { config } = require('dotenv');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 const app = express();
+app.use(cors());
+app.use(express.json())
 config(); // Load environment variables from .env file
 
 const PORT = process.env.PORT || 3000; // Default to port 3000 if PORT is not set
@@ -38,57 +41,66 @@ const cleanResponse = (responseText) => {
     return jsonText;
 };
 
-const getItinerary = async () => {
+const getItinerary = async (formData) => {
     const chatSession = model.startChat({
         generationConfig,
         history: [],
     });
 
     const query = `{
-    "destination": "Mumbai",
-    "date": "2024-09-07",
-    "travel_days": 3,
-    "number_of_travellers": 2,
-    "travelling_with": "couple",
-    "interests": ["Festivals", "Night out", "Explore City", "Outdoor"],
+    "destination": "${formData.destination}",
+    "date": "${formData.selectDate}",
+    "travel_days": "${formData.days}",
+    "number_of_travellers": "${formData.people}",
+    "travelling_with": "${formData.travellingWith}",
+    "interests": "${formData.targeting}",
     "mealPreferences": {
-        "budget": "Standard",
-        "foodCategories": "Both",
-        "foodLabels": ["Authentic"]
+        "budget": "${formData.mealPreferences.budget}",
+        "foodCategories": "${formData.mealPreferences.foodCategories}",
+        "foodLabels": "${formData.mealPreferences.foodLabels}"
 }}
     
-    Create a detailed itinerary with at least 4-5 events per day without including time for food in key-value pair format based on the following travel details, mainly focusing on the user's interests, famous spots in the city and events happening in the city on the specified date only if they align with the user's interests. The locations can be far away but travelling should be linear or round trip. Hotel budgets must be as per meal preferences budget like Economic, Standard and Premium
+    Create a detailed itinerary with at least 4-5 events per day without including time for food in key-value pair format based on the following travel details, mainly focusing on the user's interests, famous spots in the city and events happening in the city on the specified date only if they align with the user's interests. The locations can be far away but travelling should be linear or round trip. All the image links must be kept from placehold.co website just like example. In the example i have repeated recommended_activities but dont repeat it instead sugges atleast 8 activities. Suggested hotels budget should be the same compared to the meal preference budget like cheaper for Economic, medium for Standard and premium for premium
 
 Example:
 {
-  "background_image": "https://www.holidify.com/images/cmsuploads/2022/01/mumbai-city-skyline-at-night.jpg",
-  "introduction": "Mumbai, the bustling metropolis of India, offers a vibrant blend of cultural experiences, historical landmarks, and modern attractions. This itinerary, crafted for a couple seeking a mix of festivals, shopping, spa experiences, city exploration, and outdoor activities, embraces Mumbai's vibrant spirit. It includes popular destinations like Gateway of India, Elephanta Caves, and street markets, ensuring an authentic experience. We've also incorporated a special event happening on your travel date, the Ganesh Chaturthi festival, adding a unique cultural element to your journey.",
+  "location": "Goa",
+  "trip_intro": "Your trip to Goa for 3 days",
+  "trip_date": Depends upon the start date and travel_days input by user,
+  "people": Depends upon the number_of_travellers input by user 
+  "location_intro": "Goa, India is a vibrant and exciting destination for tourists. Known for its stunning beaches, rich history, and vibrant culture, Goa offers something for everyone. From water sports to nightlife, this coastal paradise is a must-visit for any traveler seeking adventure and relaxation.",
+  "background_image": "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Gateway_of_India_Mumbai.jpg/1280px-Gateway_of_India_Mumbai.jpg",
+  "introduction": "Mumbai, India's bustling metropolis, offers a vibrant mix of cultural experiences, historical landmarks, and modern attractions. This itinerary, designed for a couple seeking a blend of festivals, nightlife, city exploration, and outdoor activities, embraces Mumbai's vibrant spirit. It includes popular destinations like Gateway of India, Elephanta Caves, and local markets, ensuring an authentic experience. We've also incorporated a special event happening on your travel date, the Ganesh Chaturthi festival, adding a unique cultural element to your journey. ",
   "itinerary": {
     "Day 1": {
       "Activities": [
         {
           "Location": "Gateway of India",
-          "Description": "Start your Mumbai adventure with a visit to the iconic Gateway of India, a historic arch built in 1924. Immerse yourselves in the lively atmosphere as you admire the architectural marvel and capture stunning photos.",
+          "Description": "Start your Mumbai adventure at the iconic Gateway of India, a historic arch built in 1924. Immerse yourselves in the lively atmosphere as you admire the architectural marvel and capture stunning photos.",
           "Duration": "2 hours",
-          "Travel Time": "10 minutes from the airport (depending on traffic)"
+          "Travel Time": "10 minutes from the airport (depending on traffic)",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Elephanta Caves",
           "Description": "Embark on a ferry ride to the UNESCO World Heritage Site of Elephanta Caves, renowned for their intricate rock-cut Hindu sculptures. Explore the ancient cave temples and marvel at the exquisite carvings.",
           "Duration": "4 hours",
-          "Travel Time": "1 hour by ferry from Gateway of India"
+          "Travel Time": "1 hour by ferry from Gateway of India",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Mani Bhavan",
           "Description": "Journey back in time at Mani Bhavan, Mahatma Gandhi's former residence in Mumbai. Explore the museum and learn about Gandhi's life and philosophies.",
           "Duration": "2 hours",
-          "Travel Time": "30 minutes from Elephanta Caves"
+          "Travel Time": "30 minutes from Elephanta Caves",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Dhobi Ghat",
           "Description": "Experience the unique Dhobi Ghat, an open-air laundry facility where thousands of clothes are washed daily. Witness the fascinating blend of traditional methods and modern life.",
           "Duration": "1 hour",
-          "Travel Time": "15 minutes from Mani Bhavan"
+          "Travel Time": "15 minutes from Mani Bhavan",
+          "image": "https://placehold.co/300x200"
         }
       ]
     },
@@ -98,25 +110,29 @@ Example:
           "Location": "Chhatrapati Shivaji Maharaj Terminus (CST)",
           "Description": "Begin your day at the magnificent Chhatrapati Shivaji Maharaj Terminus, a UNESCO World Heritage Site known for its Victorian Gothic architecture. Take a guided tour to appreciate the intricate details.",
           "Duration": "2 hours",
-          "Travel Time": "15 minutes from your hotel (depending on location)"
+          "Travel Time": "15 minutes from your hotel (depending on location)",
+          "image": "https://placehold.co/300x200"
         },
         {
-          "Location": "Kanheri Caves",
-          "Description": "Escape the city bustle and venture to the serene Kanheri Caves, ancient Buddhist cave temples carved into the hills. Explore the caves, admire the rock-cut architecture, and enjoy the scenic surroundings.",
-          "Duration": "4 hours",
-          "Travel Time": "1 hour by train from CST"
+          "Location": "Ganesh Chaturthi Festival Celebrations",
+          "Description": "Celebrate Ganesh Chaturthi, a vibrant Hindu festival dedicated to Lord Ganesha. Witness colorful processions, music, and cultural performances in various parts of the city. This festival is a unique experience showcasing Mumbai's cultural vibrancy.",
+          "Duration": "3 hours",
+          "Travel Time": "1 hour by train from CST",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Juhu Beach",
           "Description": "Relax and unwind at the famous Juhu Beach, a popular spot for sunbathing, swimming, and enjoying street food. Stroll along the shore and witness the vibrant atmosphere.",
-          "Duration": "3 hours",
-          "Travel Time": "1 hour from Kanheri Caves"
+          "Duration": "2 hours",
+          "Travel Time": "1 hour from the festival location",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Shree Siddhivinayak Temple",
           "Description": "Seek blessings at the renowned Shree Siddhivinayak Temple, a prominent Hindu temple dedicated to Lord Ganesha. Experience the spiritual aura and witness the devotional fervor.",
           "Duration": "1 hour",
-          "Travel Time": "30 minutes from Juhu Beach"
+          "Travel Time": "30 minutes from Juhu Beach",
+          "image": "https://placehold.co/300x200"
         }
       ]
     },
@@ -126,30 +142,34 @@ Example:
           "Location": "Bandra-Worli Sea Link",
           "Description": "Start your day with a scenic drive on the iconic Bandra-Worli Sea Link, a stunning cable-stayed bridge offering panoramic views of the city and the Arabian Sea. Capture breathtaking photos.",
           "Duration": "1 hour",
-          "Travel Time": "30 minutes from your hotel (depending on location)"
+          "Travel Time": "30 minutes from your hotel (depending on location)",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Shanti Sagar (Bandra)",
           "Description": "Enjoy a shopping spree at the famous Shanti Sagar market, a paradise for street shopping and finding unique souvenirs. Explore the colorful stalls and bargain for your finds.",
           "Duration": "3 hours",
-          "Travel Time": "15 minutes from Bandra-Worli Sea Link"
-        },
-        {
-          "Location": "Oberoi Spa (Nariman Point)",
-          "Description": "Indulge in a rejuvenating spa experience at the luxurious Oberoi Spa. Relax with a massage or a body treatment to unwind and restore your energy.",
-          "Duration": "2 hours",
-          "Travel Time": "45 minutes from Shanti Sagar"
+          "Travel Time": "15 minutes from Bandra-Worli Sea Link",
+          "image": "https://placehold.co/300x200"
         },
         {
           "Location": "Marine Drive",
           "Description": "End your Mumbai adventure with a romantic stroll along Marine Drive, known as the 'Queen's Necklace' for its illuminated arc. Enjoy the breathtaking views of the city skyline and the Arabian Sea as you soak in the evening ambiance.",
           "Duration": "2 hours",
-          "Travel Time": "30 minutes from Oberoi Spa"
+          "Travel Time": "45 minutes from Shanti Sagar",
+          "image": "https://placehold.co/300x200"
+        },
+        {
+          "Location": "A Night Out in Mumbai",
+          "Description": "Experience the vibrant nightlife of Mumbai by heading to a trendy bar or club in the city. Enjoy live music, drinks, and the lively atmosphere.",
+          "Duration": "3 hours",
+          "Travel Time": "15 minutes from Marine Drive",
+          "image": "https://placehold.co/300x200"
         }
       ]
     }
   },
-  "total_expenses": {
+  "expenses": {
     "Accommodation": "$100 - $250 per night (depending on hotel choice)",
     "Activities": "$50 - $100 per day (including transport and entry fees)",
     "Food": "$25 - $50 per day (depending on dining choices)"
@@ -157,25 +177,25 @@ Example:
   "hotels": [
     {
       "name": "The Taj Mahal Palace, Mumbai",
-      "image": "https://www.tajhotels.com/media/images/hotels/mumbai/taj-mahal-palace/hotel-exterior-2.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.8,
       "description": "A landmark hotel with elegant rooms, multiple dining options, and a luxurious spa."
     },
     {
       "name": "The Oberoi Mumbai",
-      "image": "https://www.oberoihotels.com/media/images/hotels/mumbai/oberoi-mumbai/hotel-exterior.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.7,
-      "description": "A sophisticated hotel known for its exceptional service, fine dining, and stunning views."
+      "description": "A sophisticated hotel known for its exceptional service, fine dining."
     },
     {
       "name": "Four Seasons Hotel Mumbai",
-      "image": "https://www.fourseasons.com/images/destinations/mum/MUM_exterior_1440x960_999999999999.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.6,
       "description": "A stylish hotel with modern rooms, a rooftop pool, and a variety of dining experiences."
     },
     {
       "name": "The Leela Palace, Mumbai",
-      "image": "https://www.theleela.com/media/images/hotels/mumbai/the-leela-palace-new-delhi/hotel-exterior.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.5,
       "description": "A grand hotel with spacious rooms, multiple restaurants, and a luxurious spa."
     }
@@ -184,25 +204,49 @@ Example:
   "recommended_activities": [
     {
       "name": "Bollywood Studio Tour",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/04/bollywood-film-city-mumbai.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.5,
       "description": "Experience the magic of Bollywood by taking a tour of a film studio, where you can witness sets, costumes, and learn about the making of movies."
     },
     {
       "name": "Marine Drive Sunset Walk",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/01/mumbai-city-skyline-at-night.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.8,
       "description": "Enjoy a romantic stroll along Marine Drive as the sun sets, creating a breathtaking spectacle of golden hues over the Arabian Sea."
     },
     {
       "name": "Street Food Tour",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/07/street-food-in-mumbai.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.6,
       "description": "Embark on a culinary adventure through Mumbai's bustling streets, savoring delicious and authentic street food."
     },
     {
       "name": "Local Market Shopping",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/07/street-shopping-in-mumbai.jpg",
+      "image": "https://placehold.co/300x200",
+      "rating": 4.4,
+      "description": "Immerse yourself in the vibrant atmosphere of Mumbai's local markets, where you can find unique clothing, accessories, and souvenirs."
+    },
+    {
+      "name": "Bollywood Studio Tour",
+      "image": "https://placehold.co/300x200",
+      "rating": 4.5,
+      "description": "Experience the magic of Bollywood by taking a tour of a film studio, where you can witness sets, costumes, and learn about the making of movies."
+    },
+    {
+      "name": "Marine Drive Sunset Walk",
+      "image": "https://placehold.co/300x200",
+      "rating": 4.8,
+      "description": "Enjoy a romantic stroll along Marine Drive as the sun sets, creating a breathtaking spectacle of golden hues over the Arabian Sea."
+    },
+    {
+      "name": "Street Food Tour",
+      "image": "https://placehold.co/300x200",
+      "rating": 4.6,
+      "description": "Embark on a culinary adventure through Mumbai's bustling streets, savoring delicious and authentic street food."
+    },
+    {
+      "name": "Local Market Shopping",
+      "image": "https://placehold.co/300x200",
       "rating": 4.4,
       "description": "Immerse yourself in the vibrant atmosphere of Mumbai's local markets, where you can find unique clothing, accessories, and souvenirs."
     }
@@ -210,45 +254,47 @@ Example:
   "restaurants": [
     {
       "name": "Theobroma",
-      "image": "https://www.theobroma.co.in/wp-content/uploads/2019/06/theobroma_website_banner.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.6,
       "description": "A popular bakery chain serving delicious pastries, cakes, sandwiches, and beverages. Ideal for breakfast or lunch."
     },
     {
       "name": "Gokul Restaurant",
-      "image": "https://www.zomato.com/mumbai/gokul-restaurant-dadar-west/photos#menu-section-Starters",
+      "image": "https://placehold.co/300x200",
       "rating": 4.3,
       "description": "A renowned vegetarian restaurant serving authentic South Indian cuisine, perfect for a wholesome and flavorful meal."
     },
     {
       "name": "The Bombay Canteen",
-      "image": "https://www.thebombaycanteen.com/assets/img/the-bombay-canteen-restaurant-mumbai-1-1.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.5,
       "description": "A modern Indian restaurant offering innovative dishes with a contemporary twist, perfect for a fine dining experience."
     },
     {
       "name": "Leopold Cafe",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/04/leopold-cafe-mumbai.jpg",
+      "image": "https://placehold.co/300x200",
       "rating": 4.4,
       "description": "A historic cafe known for its traditional Parsi dishes, sandwiches, and beverages. Perfect for a quick bite or a casual meal."
-    },
+    }
+  ],
+  "emergency_numbers": [
     {
-      "name": "Khyber",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/04/khyber-restaurant-mumbai.jpg",
-      "rating": 4.6,
-      "description": "A renowned restaurant serving authentic North Indian cuisine with a focus on Mughal dishes, ideal for a special occasion dinner."
-    },
+      "Fire": 112,
+      "Police": 112,
+      "Ambulance": 112
+    }
+  ],
+  "life_quality_index": [
     {
-      "name": "Cafe Mondegar",
-      "image": "https://www.holidify.com/images/cmsuploads/2022/04/cafe-mondegar-mumbai.jpg",
-      "rating": 4.4,
-      "description": "A popular cafe known for its classic dishes, sandwiches, and beverages. Perfect for a casual lunch or dinner."
-    },
-    {
-      "name": "Soda Bottle Openerwala",
-      "image": "https://www.sodabottleopenerwala.com/wp-content/uploads/2018/04/SBOW-Banner-Image.jpg",
-      "rating": 4.5,
-      "description": "A restaurant serving authentic Parsi cuisine with a focus on traditional recipes, ideal for a unique and flavorful dining experience."
+      "Quality of Life Index": 124.33,
+      "Safety Index": 53.31,
+      "Climate Index": 68.49,
+      "Traffic Commute Time Index": 46.14,
+      "Pollution Index": 48.54,
+      "Purchasing Power Index": 43.82,
+      "Health Care Index": 63.38,
+      "Cost of Living Index": 22.05,
+      "Property Price to Income Ratio": 10.4
     }
   ]
 }
@@ -264,10 +310,10 @@ Ensure that the response is in valid JSON format. If the response is not valid J
     }
 };
 
-app.get('/generate-itinerary', async (req, res) => {
+app.post('/generate-itinerary', async (req, res) => {
     try {
-        const responseText = await getItinerary();
-
+      const formData = req.body;
+      const responseText = await getItinerary(formData);
         // Attempt to parse the cleaned response as JSON
         try {
             const jsonResponse = JSON.parse(responseText);
